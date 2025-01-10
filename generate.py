@@ -181,14 +181,14 @@ if __name__ == "__main__":
         
         # 调用总结函数
         # 随机选择一个起始索引，确保能取到连续3章
-        start_index = random.randint(0, len(chapters) - 3)
+        # start_index = random.randint(0, len(chapters) - 20)
         # 获取连续3章内容
-        selected_chapters = chapters[start_index:start_index+10]
-        summarized_chapters = asyncio.run(summarize_chapters(selected_chapters, openai_service))
+        # selected_chapters = chapters[start_index:start_index+20]
+        # summarized_chapters = asyncio.run(summarize_chapters(selected_chapters, openai_service))
         # 取第一章测试
         # summarized_chapters = asyncio.run(summarize_chapters(chapters[:1], openai_service))
         # 跑全量
-        # summarized_chapters = asyncio.run(summarize_chapters(chapters, openai_service))
+        summarized_chapters = asyncio.run(summarize_chapters(chapters, openai_service))
 
         # 创建datasets目录（如果不存在）
         os.makedirs("datasets", exist_ok=True)
