@@ -243,11 +243,13 @@ async def clean_dataset(data):
                     "value": random.choice(random_human)
                 })
             
+            # 如果结尾是human，移除最后一条human
             if filtered_conversations and filtered_conversations[-1]["from"] == "human":
-                filtered_conversations.append({
-                    "from": "gpt",
-                    "value": random_gpt()
-                })
+                filtered_conversations.pop()
+                
+            # 如果移除后只剩下human，跳过这段对话
+            if all(conv["from"] == "human" for conv in filtered_conversations):
+                continue
             
             # 检查对话有效性
             if not filtered_conversations:
