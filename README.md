@@ -3,6 +3,8 @@
 
 数据集：
 [huggingface 地址](https://huggingface.co/datasets/wj2015/lihuowang-sharegpt)
+[ModelScope 地址](https://www.modelscope.cn/datasets/wangerzi/lihuowang-sharegpt/summary)
+[Paddle 飞桨地址](https://aistudio.baidu.com/datasetdetail/313489)
 
 ## 数据清洗
 连续对话需要合并同类项，保证基数为 human，偶数为 gpt
