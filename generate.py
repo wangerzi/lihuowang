@@ -1,3 +1,9 @@
+import random
+from datasets import Dataset
+import os
+from dotenv import load_dotenv
+import asyncio
+import json
 from services.openai import OpenAIHandler
 
 
@@ -84,11 +90,13 @@ async def summarize_chapters(chapters: list, openai_service) -> list:
 注意：对话中一定要包含 human 和 gpt，不能只有一个人在说
 
 对话内容的要求如下：
-1. gpt 是指主角李火旺说出来的话，在书中可能被称做 李师兄、红中、火旺等
+1. gpt 是指主角李火旺说出来的话，在书中可能被称做 李师兄、红中、火旺、化名耳玖等
 2. human 是指其他角色说出来的话，或以说话的方式描述情况
 3. 对话内容要忠实原文，保持人物关系和情感
 4. 对话要突出关键情节和人物互动
 5. 对话要自然流畅，符合人物性格
+6. 主角李火旺的精神在大傩世界和现实世界来回穿梭，注意那些疯言疯语和语气助词 艹
+
 
 角色关系参考如下：
 现代世界：
@@ -156,46 +164,155 @@ async def summarize_chapters(chapters: list, openai_service) -> list:
     
     return final_result
 
-
-
-if __name__ == "__main__":
-    import random
-    import os
-    from dotenv import load_dotenv
-    import asyncio
-    import json
-    
+async def summarize_and_save(novel_path: str, output_path: str, openai_service: OpenAIHandler, force: bool = False):
+    """
+    总结小说内容并保存为JSON文件
+    :param novel_path: 小说文件路径
+    :param output_path: 输出JSON文件路径
+    :param openai_service: OpenAI服务实例
+    :param force: 是否强制重新生成，即使文件已存在
+    """
     try:
-        # 加载环境变量
-        load_dotenv()
-        
-        # 初始化openai服务
-        openai_service = OpenAIHandler(
-            openai_key=os.getenv("OPENAI_API_KEY"),
-            openai_url=os.getenv("OPENAI_BASE_URL"),
-            model="deepseek-chat"
-        )
+        # 如果文件已存在且不强制重新生成，则跳过
+        if os.path.exists(output_path) and not force:
+            print(f"文件 {output_path} 已存在，跳过生成")
+            return
         
         # 获取所有章节内容
-        chapters = extract_chapters("./novel.txt")
+        chapters = extract_chapters(novel_path)
         
         # 调用总结函数
         # 随机选择一个起始索引，确保能取到连续3章
         # start_index = random.randint(0, len(chapters) - 20)
         # 获取连续3章内容
         # selected_chapters = chapters[start_index:start_index+20]
-        # summarized_chapters = asyncio.run(summarize_chapters(selected_chapters, openai_service))
+        # summarized_chapters = await summarize_chapters(selected_chapters, openai_service)
         # 取第一章测试
-        # summarized_chapters = asyncio.run(summarize_chapters(chapters[:1], openai_service))
+        # summarized_chapters = await summarize_chapters(chapters[:1], openai_service)
         # 跑全量
-        summarized_chapters = asyncio.run(summarize_chapters(chapters, openai_service))
+        summarized_chapters = await summarize_chapters(chapters, openai_service)
 
         # 创建datasets目录（如果不存在）
-        os.makedirs("datasets", exist_ok=True)
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
         
         # 将结果保存为JSON文件
-        with open("datasets/lihuowang-sharegpt-origin.json", "w", encoding="utf-8") as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             json.dump(summarized_chapters, f, ensure_ascii=False, indent=2)
         
+    except Exception as e:
+        print(f"Error: {str(e)}")
+
+async def clean_dataset(data):
+    """
+    清理数据集
+    :param data: 原始数据集
+    :return: 清理后的数据集
+    """
+    import random
+    cleaned_data = []
+    
+    # 定义随机内容
+    random_human = ["火旺", "说话", "你还好吧", "醒醒", "李火旺！！"]
+    random_gpt = lambda: "艹" * random.randint(1, 10)
+    
+    for item in data:
+        try:
+            # 合并连续相同from的内容
+            merged_conversations = []
+            prev_from = None
+            for conv in item["conversations"]:
+                if conv["from"] == prev_from:
+                    merged_conversations[-1]["value"] += " " + conv["value"]
+                else:
+                    merged_conversations.append(conv)
+                prev_from = conv["from"]
+            
+            # 过滤空值并处理
+            filtered_conversations = []
+            for conv in merged_conversations:
+                if conv["from"] == "human" and not conv["value"].strip():
+                    continue
+                if conv["from"] == "gpt" and not conv["value"].strip():
+                    conv["value"] = random_gpt()
+                filtered_conversations.append(conv)
+            
+            # 处理开头和结尾
+            if filtered_conversations and filtered_conversations[0]["from"] == "gpt":
+                filtered_conversations.insert(0, {
+                    "from": "human",
+                    "value": random.choice(random_human)
+                })
+            
+            if filtered_conversations and filtered_conversations[-1]["from"] == "human":
+                filtered_conversations.append({
+                    "from": "gpt",
+                    "value": random_gpt()
+                })
+            
+            # 检查对话有效性
+            if not filtered_conversations:
+                print(f"Warning: Empty conversations in item {item}")
+                continue
+                
+            if (len(filtered_conversations) < 2 or 
+                filtered_conversations[0]["from"] != "human" or
+                filtered_conversations[1]["from"] != "gpt" or
+                filtered_conversations[-1]["from"] != "gpt"):
+                print(f"Warning: Invalid conversation structure in item {item}")
+                continue
+                
+            # 保存有效数据
+            cleaned_data.append({
+                "conversations": filtered_conversations,
+                "capter": item["capter"]
+            })
+            
+        except Exception as e:
+            print(f"Error processing item {item}: {str(e)}")
+    
+    print(f"Final dataset size: {len(cleaned_data)}")
+    return cleaned_data
+
+async def main():
+    # 加载环境变量
+    load_dotenv()
+    
+    # 初始化openai服务
+    openai_service = OpenAIHandler(
+        openai_key=os.getenv("OPENAI_API_KEY"),
+        openai_url=os.getenv("OPENAI_BASE_URL"),
+        model="deepseek-chat"
+    )
+    
+    # 调用封装后的函数
+    await summarize_and_save(
+        novel_path="./novel.txt",
+        output_path="datasets/lihuowang-sharegpt-origin.json",
+        openai_service=openai_service
+    )
+    
+    # 读取原始数据
+    with open("datasets/lihuowang-sharegpt-origin.json", "r", encoding="utf-8") as f:
+        origin_data = json.load(f)
+    
+    # 清理数据
+    cleaned_data = await clean_dataset(origin_data)
+
+    # 保存清理后的数据为json文件
+    with open("datasets/lihuowang-sharegpt.json", "w", encoding="utf-8") as f:
+        json.dump(cleaned_data, f, ensure_ascii=False, indent=2)
+    
+    # 使用datasets库保存清理后的数据
+    dataset = Dataset.from_dict({
+        "conversations": [item["conversations"] for item in cleaned_data],
+        "capter": [item["capter"] for item in cleaned_data]
+    })
+    
+    # 保存数据集
+    dataset.save_to_disk("datasets/lihuowang-sharegpt")
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(main=main())
     except Exception as e:
         print(f"Error: {str(e)}")
