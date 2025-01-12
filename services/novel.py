@@ -4,6 +4,52 @@ import random
 
 from services.openai import OpenAIHandler
 
+def split_novel_to_pretrain_data(novel_path: str, target_length: int = 500) -> list:
+    """
+    将小说内容分割为适合预训练的数据块
+    :param novel_path: 小说文件路径
+    :param target_length: 目标文本长度，默认500字
+    :return: 包含分割后文本的字典列表 [{text: string}]
+    """
+    try:
+        with open(novel_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # 按行分割并去除空白
+        lines = [line.strip() for line in content.split('\n') if line.strip()]
+        
+        # 合并行到目标长度
+        chunks = []
+        current_chunk = ""
+        
+        for line in lines:
+            # 如果当前块为空，直接添加
+            if not current_chunk:
+                current_chunk = line
+                continue
+            
+            # 计算添加当前行后的长度
+            potential_length = len(current_chunk) + len(line)
+            
+            # 如果添加后长度接近目标长度（偏差绝对值最小）
+            if abs(potential_length - target_length) < abs(len(current_chunk) - target_length):
+                current_chunk += line
+            else:
+                # 保存当前块并开始新块
+                chunks.append({"text": current_chunk})
+                current_chunk = line
+        
+        # 添加最后一个块
+        if current_chunk:
+            chunks.append({"text": current_chunk})
+            
+        return chunks
+    
+    except FileNotFoundError:
+        raise Exception("文件未找到")
+    except Exception as e:
+        raise Exception(f"处理文件时出错: {str(e)}")
+
 
 def extract_chapters(novel_path):
     """

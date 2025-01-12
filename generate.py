@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 import asyncio
 import json
-from services.novel import summarize_and_save, summarize_qa_and_save
+from services.novel import split_novel_to_pretrain_data, summarize_and_save, summarize_qa_and_save
 from services.openai import OpenAIHandler
 
 async def clean_dataset(data):
@@ -118,6 +118,16 @@ async def convert_summary_to_sharegpt(summary_path, output_path):
 async def main():
     # 加载环境变量
     load_dotenv()
+
+    # 调用分割函数生成预训练数据
+    pretrain_data = split_novel_to_pretrain_data("./novel.txt")
+    
+    # 创建datasets目录（如果不存在）
+    os.makedirs("datasets", exist_ok=True)
+    
+    # 保存预训练数据
+    with open("datasets/daoguiyixian-pretrain.json", "w", encoding="utf-8") as f:
+        json.dump(pretrain_data, f, ensure_ascii=False, indent=2)
     
     # 初始化openai服务
     openai_service = OpenAIHandler(

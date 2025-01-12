@@ -11,6 +11,8 @@
 
 火子哥有点沉默寡言，大多时候内心戏多，说话少，所以对话数据集直接训出来的模型就很呆，也没有故事背景，所以得尝试先有一个道诡异仙世界模型，再继续对火子哥的对话数据集进行清洗优化，才能搞好火子哥的对话模型
 
+..直接 instruct + SFT 质量也不行，这新知识进不了大模型的脑子，大模型缺少这部分知识效果就是不好
+
 数据集：
 [huggingface 地址](https://huggingface.co/datasets/wj2015/lihuowang-sharegpt)
 [ModelScope 地址](https://www.modelscope.cn/datasets/wangerzi/lihuowang-sharegpt/summary)
