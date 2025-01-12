@@ -18,11 +18,11 @@
 
 | 数据集名称 | 描述 |
 |-----------|------|
-| daoguiyixian-sharegpt-summary.json | 章节摘要的 QA |
-| daoguiyixian-sharegpt-qa.json | 章节内容的细致问答 |
+| daoguiyixian-sharegpt-summary.json | ShareGPT 格式，章节摘要的 QA |
+| daoguiyixian-sharegpt-qa.json | ShareGPT 格式，针对章节内容的细致问答 |
+| lihuowang-sharegpt.json | ShareGPT 格式，经过清洗和整理的李火旺对话数据集，包含更规范的对话格式和更完整的对话内容 |
 | daoguiyixian-summary.json | 包含各章节的摘要总结，概括了每章的主要情节和关键事件 |
-| lihuowang-sharegpt-origin.json | 原始的李火旺对话数据集，包含李火旺与其他角色的对话片段，主要来自小说中的对话内容 |
-| lihuowang-sharegpt.json | 经过清洗和整理的李火旺对话数据集，包含更规范的对话格式和更完整的对话内容 |
+| lihuowang-sharegpt-origin.json | 原始的李火旺对话数据集，包含李火旺与其他角色的对话片段，主要来自小说中的对话内容，有需要可以再自行清洗数据 |
 
 
 ## 数据清洗
