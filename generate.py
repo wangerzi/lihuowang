@@ -87,13 +87,15 @@ async def convert_summary_to_sharegpt(summary_path, output_path):
     
     # 问题模板
     question_templates = [
-        "道诡异仙第{chapter}章主要讲了什么内容",
-        "道诡异仙第{chapter}章主要内容是什么",
-        "道诡异仙第{chapter}章主要写了啥",
-        "道诡异仙第{chapter}章主要是什么剧情",
-        "道诡异仙第{chapter}章剧情是什么",
-        "道诡异仙第{chapter}章内容是什么",
-        "道诡异仙第{chapter}章他们做了什么事"
+        "《道诡异仙》第{chapter}章主要讲了什么内容",
+        "《道诡异仙》第{chapter}章主要内容是什么",
+        "《道诡异仙》第{chapter}章主要写了啥",
+        "《道诡异仙》第{chapter}章讲了什么",
+        "《道诡异仙》第{chapter}章主要是什么剧情",
+        "《道诡异仙》第{chapter}章剧情是什么",
+        "《道诡异仙》第{chapter}章内容是什么",
+        "《道诡异仙》第{chapter}章他们做了什么事"
+        "《道诡异仙》第{chapter}章他们干了什么事"
     ]
     
     sharegpt_data = []
