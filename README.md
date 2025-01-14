@@ -20,12 +20,30 @@
 
 | 数据集名称 | 描述 |
 |-----------|------|
+| lihuowang-alpaca-dpo.json | 使用 Alpaca 格式的 DPO 数据集，包含李火旺的疯言疯语回答和正常回答的对比 |
 | daoguiyixian-sharegpt-summary.json | ShareGPT 格式，章节摘要的 QA |
 | daoguiyixian-sharegpt-qa.json | ShareGPT 格式，针对章节内容的细致问答 |
 | lihuowang-sharegpt.json | ShareGPT 格式，经过清洗和整理的李火旺对话数据集，包含更规范的对话格式和更完整的对话内容 |
 | daoguiyixian-summary.json | 包含各章节的摘要总结，概括了每章的主要情节和关键事件 |
 | lihuowang-sharegpt-origin.json | 原始的李火旺对话数据集，包含李火旺与其他角色的对话片段，主要来自小说中的对话内容，有需要可以再自行清洗数据 |
 
+## 进展
+
+#### 2025-01-14
+
+基于 qwen2.5-7b-instruct 5e-5 学习率做两轮 DPO，可以学到疯狂火子哥说话风格
+
+![image](assets/image-20250114180615-e0x9svi.png)
+
+![image](assets/image-20250114180805-nlgua14.png)
+
+![image](assets/image-20250114191407-hqatl7r.png)
+
+![image](assets/image-20250114192320-cvw9t42.png)
+
+不过因为没做 pretrain 和 SFT，DPO 只能学到说话风格，缺少先验知识会有事实性错误
+
+![image](assets/image-20250114191702-r0np6yl.png)
 
 ## 数据清洗
 连续对话需要合并同类项，保证基数为 human，偶数为 gpt
