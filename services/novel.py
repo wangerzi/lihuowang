@@ -4,7 +4,7 @@ import random
 
 from services.openai import OpenAIHandler
 
-def split_novel_to_pretrain_data(novel_path: str, target_length: int = 500) -> list:
+def split_novel_to_pretrain_data(novel_path: str, target_length: int = 2000) -> list:
     """
     将小说内容分割为适合预训练的数据块
     :param novel_path: 小说文件路径
