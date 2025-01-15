@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 import asyncio
 import json
-from services.novel import split_novel_to_pretrain_data, summarize_and_save, summarize_qa_and_save
+from services.novel import split_novel_to_pretrain_data, lihuowang_sharegpt_and_save, summarize_qa_and_save
 from services.openai import OpenAIHandler
 
 async def clean_dataset(data):
@@ -136,27 +136,29 @@ async def main():
         model="deepseek-chat"
     )
     
-    # 调用封装后的函数
-    await summarize_and_save(
-        novel_path="./novel.txt",
-        output_path="datasets/lihuowang-sharegpt-origin.json",
-        openai_service=openai_service
-    )
     
     # 调用QA总结函数
     await summarize_qa_and_save(
         novel_path="./novel.txt",
-        conv_output_path="datasets/daoguiyixian-sharegpt-qa.json",
-        summary_output_path="datasets/daoguiyixian-summary.json",
-        openai_service=openai_service
+        conv_output_path="datasets/daoguiyixian-sharegpt-qa-v2.json",
+        summary_output_path="datasets/daoguiyixian-summary-v2.json",
+        openai_service=openai_service,
+        # force=True
     )
     
     # 将摘要转换为sharegpt格式
     await convert_summary_to_sharegpt(
-        summary_path="datasets/daoguiyixian-summary.json",
-        output_path="datasets/daoguiyixian-sharegpt-summary.json"
+        summary_path="datasets/daoguiyixian-summary-v2.json",
+        output_path="datasets/daoguiyixian-sharegpt-summary-v2.json"
     )
     
+    # 调用封装后的函数
+    await lihuowang_sharegpt_and_save(
+        novel_path="./novel.txt",
+        output_path="datasets/lihuowang-sharegpt-origin.json",
+        openai_service=openai_service
+    )
+
     # 读取原始数据
     with open("datasets/lihuowang-sharegpt-origin.json", "r", encoding="utf-8") as f:
         origin_data = json.load(f)

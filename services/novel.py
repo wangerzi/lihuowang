@@ -208,7 +208,7 @@ async def summarize_chapters(chapters: list, openai_service: OpenAIHandler) -> l
     
     return final_result
 
-async def summarize_and_save(novel_path: str, output_path: str, openai_service: OpenAIHandler, force: bool = False):
+async def lihuowang_sharegpt_and_save(novel_path: str, output_path: str, openai_service: OpenAIHandler, force: bool = False):
     """
     总结小说内容并保存为JSON文件
     :param novel_path: 小说文件路径
@@ -265,8 +265,6 @@ async def summarize_qa(chapters: list, openai_service: OpenAIHandler) -> list:
     def validate_response(response: Dict[str, Any]):
         if not isinstance(response, dict):
             raise Exception("Response is not a dictionary")
-        if "summary" not in response:
-            raise Exception("Missing 'summary' field")
         if "conversations" not in response:
             raise Exception("Missing 'conversations' field")
         if not isinstance(response["conversations"], list):
@@ -288,24 +286,28 @@ async def summarize_qa(chapters: list, openai_service: OpenAIHandler) -> list:
     # 创建任务列表
     tasks = []
     semaphore = asyncio.Semaphore(50)  # 限制并发数
+
     
     async def process_chapter(index: int, content: str):
-        async with semaphore:
-            messages = [{
+        system_message = {
                 "role": "system",
-                "content": """你是一个专业的小说内容分析专家，请根据小说《道诡异仙》的概括结果和给定待分析的章节内容，首先请总结章节主要内容，然后以多个独立问答形式尽可能全面对该章节剧情、人物、行为、冲突、结果进行描述。
-独立问答的意思是：问题中需要自然的带上事件的上下文，比如参与任务、行为、冲突，且一个独立问答只能有一个主要问题，而答案中需要用大白话描述剧情进展、心理变化和结果。为了让更多通过问答看懂剧情，问题不可提及“本章节”、“这一章节”。
-《道诡异仙》是一部融合了玄幻、修真、恐怖和心理悬疑元素的小说，主要讲述了主角李火旺在一个诡异而扭曲的世界中挣扎求生的故事。
-故事背景
-李火旺原本是一个现代社会的普通人，但因为某种原因，他陷入了精神分裂的状态，分不清现实与幻觉。在他的幻觉中，他身处一个充满诡异和恐怖的世界，成为了一个名为“清风观”的道观中的弟子。这个道观由一位名为丹阳子的邪恶道士掌控，丹阳子以炼丹为名，实际上却在用活人炼制丹药，追求成仙之道。
-主要情节
-清风观的恐怖生活：李火旺在清风观中目睹了丹阳子的残忍行径，丹阳子不仅用活人炼丹，还通过各种邪恶手段控制弟子和药引（被用来炼丹的活人）。李火旺在道观中与其他药引一起生活，目睹了无数人被残忍杀害，内心充满了恐惧和愤怒。
-幻觉与现实的交织：李火旺时常在幻觉和现实之间切换，有时他以为自己身处精神病院，有时又回到清风观的恐怖世界。他逐渐意识到，自己可能并不是真的疯了，而是被卷入了一个超自然的世界。
-反抗与复仇：李火旺决定反抗丹阳子的暴行，他利用自己的智慧和勇气，逐渐揭开了丹阳子的秘密，并最终设计了一个计划，成功杀死了丹阳子。然而，丹阳子的死亡并没有结束李火旺的苦难，他发现自己仍然被困在这个诡异的世界中。
-探索与求生：在丹阳子死后，李火旺带领其他幸存者逃离了清风观，开始了在诡异世界中的探索与求生。他们遇到了各种超自然的存在，如“游老爷”、“黑太岁”等，李火旺逐渐了解到这个世界的真相，并试图找到回到现实世界的方法。
-心理挣扎与成长：在整个过程中，李火旺不仅要面对外部的恐怖和危险，还要与自己的内心斗争。他逐渐从一个被动的受害者成长为一个主动的求生者，学会了在这个充满诡异和危险的世界中生存下去。
-主题与风格
-《道诡异仙》通过李火旺的经历，探讨了现实与幻觉、人性与邪恶、生存与反抗等主题。小说充满了恐怖和悬疑的氛围，情节紧凑，充满了反转和意外。作者通过细腻的心理描写和诡异的世界观构建，成功营造了一个令人毛骨悚然的故事世界。
+                "content": """你是一个专业的小说内容分析专家，请根据小说《道诡异仙》的基本介绍和给定待分析的章节内容进行提问。
+《道诡异仙》是一部融合了玄幻、修真、恐怖和心理悬疑元素的小说，主角李火旺分不清大傩世界和现实世界，讲述了李火旺在一个诡异而扭曲的大傩世界与现实世界中不断穿梭挣扎求生的故事。
+通过李火旺的经历，探讨了现实与幻觉、人性与邪恶、生存与反抗等主题。小说充满了恐怖和悬疑的氛围，情节紧凑，充满了反转和意外。作者通过细腻的心理描写和诡异的世界观构建，成功营造了一个令人毛骨悚然的故事世界观。
+
+请在指定的提问角度下，以独立问答形式尽可能多，尽可能全面的对该章节剧情进行剖析。
+
+提问的要求：
+- 问题中需要自然的带上事件的上下文背景
+- “大傩世界”和“现实世界” 的问题需要区分
+- 一个独立问答只能有一个主要问题
+
+答案的要求：
+- 为了让更多人通过问答看懂剧情，需要自然合理的带入背景上下文
+- 模仿章节内容的中的描述手法和风格进行回答
+- “大傩世界”和“现实世界” 需要区分开
+- 答案的背景上下文需要用具体的名词或事件进行指代，不可用“在章节中”“在《道诡异仙》中”等太宽泛的代词
+- 直接回答，不可重复问题中的部分内容
 
 返回格式要求如下：
 1. 对话格式为 JSON 对象，包含 conversations 字段
@@ -313,9 +315,8 @@ async def summarize_qa(chapters: list, openai_service: OpenAIHandler) -> list:
 3. 每个对话数组对象包含 from 和 value 字段
 4. from 字段只能是 'gpt' 或 'human'
 
-请严格按照以下JSON格式返回响应：
+请按照以下 JSON 格式返回响应：
 {
-    "summary": "章节主要内容",
     "conversations": [
         [
             {"from": "human", "value": "问题1"},
@@ -324,20 +325,79 @@ async def summarize_qa(chapters: list, openai_service: OpenAIHandler) -> list:
         [
             {"from": "human", "value": "问题2"},
             {"from": "gpt", "value": "答案2"}
-        ]
+        ],
+        [
+            {"from": "human", "value": "问题3"},
+            {"from": "gpt", "value": "答案3"}
+        ],
+        ...
     ]
-}"""
-            }, {
-                "role": "user",
-                "content": f"待分析章节内容：\n{content}"
-            }]
-            
-            response_json = await openai_service.request_json(
-                messages=messages,
-                temp = 0.7,
-                validator_callback=validate_response,
-            )
+}
+待分析章节内容：
+""" + content
+            }
+        ANGLES = [
+            "名词介绍，关注章节中解释过、需要注意的名词，长什么样子，有何作用，为何存在等",
+            "剧情介绍，在具体场景下，何人干了何事",
+            "对话介绍，在具体场景和形式下，何时何地何处说了什么话，以及推断该角色说这话表达了什么意思",
+            "有助于了解本章内容的有深度分析的问题和答案"
+        ]
+        async with semaphore:
+            print(f"正在处理第 {index + 1} 章，内容长度：{len(content)} 字符")
             try:
+                # 请求生成章节摘要
+                summary_response = await openai_service.request(
+                    messages=[{
+                        "role": "system",
+                        "content": f"""你是一个专业的小说内容分析专家，请根据小说《道诡异仙》的基本介绍和给定待分析章节内容进行总结。
+    《道诡异仙》是一部融合了玄幻、修真、恐怖和心理悬疑元素的小说，主角李火旺分不清大傩世界和现实世界，讲述了李火旺在一个诡异而扭曲的大傩世界与现实世界中不断穿梭挣扎求生的故事。
+    通过李火旺的经历，探讨了现实与幻觉、人性与邪恶、生存与反抗等主题。小说充满了恐怖和悬疑的氛围，情节紧凑，充满了反转和意外。作者通过细腻的心理描写和诡异的世界观构建，成功营造了一个令人毛骨悚然的故事世界观。
+
+    总结生成的要求如下：
+    1. 纯文本总结，多个方面的内容用换行隔开
+    2. 总结包括多个方面，分别是主要剧情发展、人物关系概括、人物心理变化
+    3. 模仿章节内容的中的描述手法和风格
+    4. 注意区分大傩世界和现实世界
+    """
+                        }, {
+                        "role": "user",
+                        "content": f"待分析章节内容：\n{content}"
+                    }],
+                    temp=0.7
+                )
+                all_conversations = []
+                for angle in ANGLES:
+                    messages = [system_message, {
+                        "role": "user",
+                        "content": f"提问角度：{angle}"
+                    }]
+                    
+                    response_json = await openai_service.request_json(
+                        messages=messages,
+                        temp=0.7,
+                        validator_callback=validate_response,
+                    )
+                    # 合并所有角度的对话
+                    all_conversations.extend(response_json["conversations"])
+                
+                # print("all_conversations", all_conversations)
+                # 返回合并后的结果
+                # 直接修改 all_conversations 中的数据
+                for conv_pair in all_conversations:
+                    for conv in conv_pair:
+                        # 过滤value中的特定字符串
+                        conv["value"] = conv["value"]\
+                            .replace("在章节中", "")\
+                            .replace("章节中", "")\
+                            .replace("在《道诡异仙》中", "")\
+                            .replace("在《道诡异仙》的", "")\
+                            .replace("《道诡异仙》中", "")\
+                            .replace("《道诡异仙》的", "")
+                
+                response_json = {
+                    "summary": summary_response,
+                    "conversations": all_conversations
+                }
                 response_json["chapter"] = index  # 添加章节索引
                 return response_json
             except Exception as e:
@@ -372,9 +432,9 @@ async def summarize_qa_and_save(novel_path: str, conv_output_path: str, summary_
         chapters = extract_chapters(novel_path)
         
         # 随机选择一个起始索引，确保能取到连续3章
-        # start_index = random.randint(0, len(chapters) - 10)
+        # start_index = random.randint(0, len(chapters) - 20)
         # 获取连续3章内容
-        # summarized_data = await summarize_qa(chapters[start_index:start_index+10], openai_service)
+        # summarized_data = await summarize_qa(chapters[start_index:start_index+20], openai_service)
         # 调用总结函数（全量）
         summarized_data = await summarize_qa(chapters, openai_service)
 

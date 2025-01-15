@@ -20,7 +20,10 @@
 
 | 数据集名称 | 描述 |
 |-----------|------|
-| lihuowang-alpaca-dpo.json | 使用 Alpaca 格式的 DPO 数据集，包含李火旺的疯言疯语回答和正常回答的对比 |
+| lihuowang-alpaca-dpo.json | 【推荐】使用 Alpaca 格式的 DPO 数据集，包含李火旺的疯言疯语回答和正常回答的对比 |
+| daoguiyixian-sharegpt-summary-v2.json | 【推荐】ShareGPT 格式，章节摘要的 QA 第二版，优化了问题质量和回答准确性 |
+| daoguiyixian-sharegpt-qa-v2.json | 【推荐】2W 条数据，ShareGPT 格式，针对章节内容的细致问答第二版，增加了更多细节问题和更准确的回答 |
+| daoguiyixian-summary-v2.json | 各章节的摘要总结第二版，优化了摘要的连贯性和关键事件的覆盖度 |
 | daoguiyixian-sharegpt-summary.json | ShareGPT 格式，章节摘要的 QA |
 | daoguiyixian-sharegpt-qa.json | ShareGPT 格式，针对章节内容的细致问答 |
 | lihuowang-sharegpt.json | ShareGPT 格式，经过清洗和整理的李火旺对话数据集，包含更规范的对话格式和更完整的对话内容 |
