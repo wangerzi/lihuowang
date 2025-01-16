@@ -80,6 +80,39 @@ async def clean_dataset(data):
     print(f"Final dataset size: {len(cleaned_data)}")
     return cleaned_data
 
+async def convert_sharegpt_to_alpaca(sharegpt_path: str, alpaca_path: str, instruct: str) -> None:
+    """将sharegpt格式数据转换为alpaca格式
+    
+    参数:
+        sharegpt_path: sharegpt格式数据文件路径
+        alpaca_path: 输出alpaca格式数据文件路径
+        instruct: 指令模板
+    """
+    # 读取sharegpt数据
+    with open(sharegpt_path, "r", encoding="utf-8") as f:
+        sharegpt_data = json.load(f)
+    
+    alpaca_data = []
+    for item in sharegpt_data:
+        # 确保对话格式正确
+        if len(item["conversations"]) < 2:
+            continue
+        if item["conversations"][0]["from"] != "human" or item["conversations"][1]["from"] != "gpt":
+            continue
+            
+        # 构建alpaca格式
+        alpaca_item = {
+            "instruction": instruct,
+            "input": item["conversations"][0]["value"],
+            "output": item["conversations"][1]["value"]
+        }
+        alpaca_data.append(alpaca_item)
+    
+    # 保存转换后的数据
+    with open(alpaca_path, "w", encoding="utf-8") as f:
+        json.dump(alpaca_data, f, ensure_ascii=False, indent=2)
+
+
 async def convert_summary_to_sharegpt(summary_path, output_path):
     """将章节摘要转换为sharegpt格式"""
     with open(summary_path, "r", encoding="utf-8") as f:
@@ -94,7 +127,7 @@ async def convert_summary_to_sharegpt(summary_path, output_path):
         "《道诡异仙》第{chapter}章主要是什么剧情",
         "《道诡异仙》第{chapter}章剧情是什么",
         "《道诡异仙》第{chapter}章内容是什么",
-        "《道诡异仙》第{chapter}章他们做了什么事"
+        "《道诡异仙》第{chapter}章他们做了什么事",
         "《道诡异仙》第{chapter}章他们干了什么事"
     ]
     
@@ -150,6 +183,19 @@ async def main():
     await convert_summary_to_sharegpt(
         summary_path="datasets/daoguiyixian-summary-v2.json",
         output_path="datasets/daoguiyixian-sharegpt-summary-v2.json"
+    )
+    # 将sharegpt格式的摘要数据转换为alpaca格式
+    await convert_sharegpt_to_alpaca(
+        sharegpt_path="datasets/daoguiyixian-sharegpt-summary-v2.json",
+        alpaca_path="datasets/daoguiyixian-alpaca-summary-v2.json",
+        instruct="请用你理解的《道诡异仙》小说内容解答用户疑惑"
+    )
+    
+    # 将sharegpt格式的QA数据转换为alpaca格式
+    await convert_sharegpt_to_alpaca(
+        sharegpt_path="datasets/daoguiyixian-sharegpt-qa-v2.json",
+        alpaca_path="datasets/daoguiyixian-alpaca-qa-v2.json",
+        instruct="请用你理解的《道诡异仙》小说内容解答用户疑惑"
     )
     
     # 调用封装后的函数
